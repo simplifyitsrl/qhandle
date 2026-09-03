@@ -1,0 +1,24 @@
+# Upstream clones, not part of this project. Re-clone with:
+#   git clone https://github.com/qubic/core
+#   git clone https://github.com/qubic/qubic-cli
+core/
+qubic-cli/
+
+# Build output
+build/
+*.o
+*.out
+test_canonicalize
+tests/qhandle_helper
+
+# Local K12 linkage spikes (not QHandle tests). Kept on disk, out of the proposal repo.
+tests/test_k12_*.cpp
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Local grounding material, not part of the submission:
+# copies of Qubic's own docs and reference contracts, plus the internal brief.
+reference/
+qhandle.json

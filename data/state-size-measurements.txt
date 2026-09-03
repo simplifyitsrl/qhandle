@@ -1,0 +1,24 @@
+QHandle state layout (measured)
+===============================
+
+sizeof(id)                 = 32 (align 8)
+sizeof(Name)               = 32 (align 1)
+sizeof(Record)             = 80 (align 8)
+sizeof(Commitment)         = 40
+sizeof(CommitmentPreimage) = 72  <-- must be 72 exactly, no padding (32+32+8)
+
+sizeof(StateData)          = 23430216 bytes = 22.34 MB
+  _handles                 = 14712848 bytes = 14.03 MB
+  _primary                 = 8421392 bytes = 8.03 MB
+  _commitments             = 295952 bytes = 289.02 KB
+
+registry capacity          = 131072 slots (2^17)
+usable at 80% load factor  = 104857 handles
+share of the 1 GB limit    = 2.2%
+
+public interface structs (must stay padding-stable across compilers)
+  RegisterHandle_input     = 80
+  ResolveHandle_output     = 80
+  CommitRegistration_input = 32
+
+OK

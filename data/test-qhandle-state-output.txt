@@ -1,0 +1,5 @@
+Starting QHandle Stateful Integration Tests...
+
+==========================================
+Test Summary: 53 assertions, 0 failures
+==========================================
