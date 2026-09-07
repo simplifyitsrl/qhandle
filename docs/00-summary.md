@@ -60,6 +60,11 @@ toward IPO share participation (with an honest caveat on that last line in [09](
 registration and renewal revenue through Qubic's native dividend distribution — same source of
 value, no contract logic of ours in the path, no added audit surface ([08](08-return-to-incubation.md)).
 
+**How we make money:** the same way, and only that way. Our income is a ~5% shareholding in the
+contract — about 3.5% of gross fees after the reserve burn. There is no second revenue stream and
+no team treasury; on Qubic the contract's revenue belongs to its shareholders
+([07](07-business-model-pricing.md)).
+
 ## Honest statement of stage
 
 Pre-build/prototype. Against the program's evidence standard we have the prototype artifact and the
