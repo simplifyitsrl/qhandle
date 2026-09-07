@@ -33,8 +33,9 @@ Full argument: [`docs/03-why-now-why-qubic.md`](docs/03-why-now-why-qubic.md).
 |---|---|
 | [`src/QHandle.h`](src/QHandle.h) | The registry contract, ~1,500 lines of QPI-restricted C++. Compiles clean against real Qubic core headers. |
 | [`tests/test_canonicalize.cpp`](tests/test_canonicalize.cpp) | 28 passing assertions on the name-validation layer, including two aliasing attacks. |
+| [`tests/test_qhandle_state.cpp`](tests/test_qhandle_state.cpp) | 53 passing assertions running the real contract procedures against a stubbed QPI context: commit–reveal, front-running defence, expiry and grace, fee accounting, `END_TICK` burn and dividends. |
 | [`DESIGN.md`](DESIGN.md) | Full design rationale, with measured state sizes and every decision cited to core source or docs. |
-| [`reference/docs/`](reference/docs/) | Offline copies of the Qubic documentation the design is grounded in. |
+| [`ui/index.html`](ui/index.html) | Read-only explorer prototype. Resolves handles, shows the exact RPC request and the response decoded field by field. Sandbox for demos — runs on sample data until the contract has an index. |
 
 Measured, not estimated: total contract state is **22.34 MB** (2.2% of the 1 GB limit), giving
 **104,857** usable handles at the 80% load factor where `QPI::HashMap` stays constant-time.
@@ -92,6 +93,7 @@ DESIGN.md                  technical design, sizing math, decision log
 docs/                      the Incubation Program proposal (00-summary first)
 src/QHandle.h              the registry contract
 tests/                     verification harness
+ui/index.html              read-only explorer prototype (open it directly, no build step)
 demo/, data/               evidence pack (measurements, test output, walkthroughs)
 ```
 
