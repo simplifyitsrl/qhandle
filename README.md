@@ -65,8 +65,8 @@ g++ -std=c++20 -mavx2 -w -I core/src -I core -I src \
 # -> 28 checks, 0 failures
 ```
 
-To confirm the contract itself compiles under the real contract prologue, see
-[`docs/04-product-demo.md`](docs/04-product-demo.md#reproducible-walkthrough).
+Full build and run instructions for every piece — contract, both test suites, and the payload
+tooling — are in [`RUNNING.md`](RUNNING.md).
 
 ## Who is building it
 
@@ -86,6 +86,7 @@ transfer and where we are weak.
 
 ```
 README.md                  this file
+RUNNING.md                 how to build and run everything locally
 LICENSE                    MIT
 DESIGN.md                  technical design, sizing math, decision log
 docs/                      the Incubation Program proposal (00-summary first)
