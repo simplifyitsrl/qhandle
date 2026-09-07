@@ -1,0 +1,694 @@
+<title>QHandle Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+  /* Design tokens taken from swap.qubicportal.org so QHandle sits inside the
+     same visual system as the rest of the Qubic Portal surface. */
+  :root {
+    --primary-20: #ccfcff;
+    --primary-30: #b0f9fe;
+    --primary-40: #61f0fe;
+    --primary-50: #1adef5;
+    --primary-60: #03c1db;
+    --primary-70: #019ab8;
+    --primary-90: #112c35;
+
+    --gray-50:  #808b9b;
+    --gray-60:  #4b5565;
+    --gray-70:  #202e3c;
+    --gray-80:  #151e27;
+    --gray-90:  #101820;
+    --gray-100: #0c131b;
+    --gray-200: #eeeeee;
+    --gray-300: #e0e0e0;
+    --gray-500: #9e9e9e;
+    --gray-700: #616161;
+    --gray-900: #212121;
+
+    --success-40: #47cd89;  --success-90: #11322d;
+    --warning-40: #cda747;  --warning-90: #322d11;
+    --error-40:   #f97066;  --error-90:   #381d1e;
+
+    --radius: 0.625rem;
+
+    --sans: Inter, system-ui, -apple-system, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    /* dark is the default, matching the portal */
+    --bg:        var(--gray-100);
+    --surface:   var(--gray-90);
+    --surface-2: var(--gray-80);
+    --line:      var(--gray-70);
+    --faint:     var(--gray-60);
+    --muted:     var(--gray-50);
+    --ink:       #ffffff;
+    --accent:    var(--primary-50);
+    --accent-hi: var(--primary-40);
+    --accent-bg: var(--primary-90);
+    --on-accent: var(--gray-100);
+    --ok:        var(--success-40);  --ok-bg:   var(--success-90);
+    --warn:      var(--warning-40);  --warn-bg: var(--warning-90);
+    --bad:       var(--error-40);    --bad-bg:  var(--error-90);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg:        #fafafa;
+      --surface:   #ffffff;
+      --surface-2: var(--gray-200);
+      --line:      var(--gray-300);
+      --faint:     var(--gray-500);
+      --muted:     var(--gray-700);
+      --ink:       var(--gray-900);
+      --accent:    var(--primary-70);
+      --accent-hi: var(--primary-60);
+      --accent-bg: #e6fbfe;
+      --on-accent: #ffffff;
+      --ok:        #1c7a4d;  --ok-bg:   #e4f6ec;
+      --warn:      #8a6a12;  --warn-bg: #faf1d9;
+      --bad:       #c0433a;  --bad-bg:  #fbe7e5;
+    }
+  }
+
+  :root[data-theme="light"] {
+    --bg:        #fafafa;
+    --surface:   #ffffff;
+    --surface-2: var(--gray-200);
+    --line:      var(--gray-300);
+    --faint:     var(--gray-500);
+    --muted:     var(--gray-700);
+    --ink:       var(--gray-900);
+    --accent:    var(--primary-70);
+    --accent-hi: var(--primary-60);
+    --accent-bg: #e6fbfe;
+    --on-accent: #ffffff;
+    --ok:        #1c7a4d;  --ok-bg:   #e4f6ec;
+    --warn:      #8a6a12;  --warn-bg: #faf1d9;
+    --bad:       #c0433a;  --bad-bg:  #fbe7e5;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0 24px 90px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 940px; margin: 0 auto; }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 20px; flex-wrap: wrap; padding: 44px 0 6px;
+  }
+  h1 {
+    font-size: 40px; font-weight: 700; letter-spacing: -0.025em;
+    margin: 0; line-height: 1.1;
+  }
+  .tagline { color: var(--muted); font-size: 15px; margin: 6px 0 0; }
+  .themetoggle {
+    font: 500 12px/1 var(--sans);
+    color: var(--muted); background: transparent;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 9px 14px; cursor: pointer; transition: .15s;
+  }
+  .themetoggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- mode banner ---------- */
+  .mode {
+    display: flex; align-items: flex-start; gap: 11px;
+    border: 1px solid var(--line); background: var(--surface);
+    border-radius: var(--radius); padding: 13px 16px;
+    font-size: 13.5px; color: var(--muted); margin: 26px 0 30px;
+  }
+  .mode .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--warn); margin-top: 7px; flex: none;
+  }
+  .mode.connected .dot { background: var(--accent); }
+  .mode b { color: var(--ink); font-weight: 600; }
+  .mode code { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+
+  /* ---------- search ---------- */
+  .searchrow { display: flex; gap: 10px; }
+  .field {
+    flex: 1; display: flex; align-items: center;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 0 18px; transition: border-color .15s;
+    min-width: 0;
+  }
+  .field:focus-within { border-color: var(--accent); }
+  .field input {
+    flex: 1; border: 0; outline: 0; background: none; color: var(--ink);
+    font: 600 20px/1 var(--sans); letter-spacing: -0.015em;
+    padding: 17px 0; min-width: 0;
+  }
+  .field input::placeholder { color: var(--faint); font-weight: 500; }
+  button.go {
+    font: 600 14.5px/1 var(--sans);
+    background: var(--accent); color: var(--on-accent);
+    border: 0; border-radius: var(--radius);
+    padding: 0 26px; cursor: pointer; transition: .15s; white-space: nowrap;
+  }
+  button.go:hover { background: var(--accent-hi); }
+
+  .examples {
+    display: flex; flex-wrap: wrap; gap: 7px; align-items: center;
+    margin-top: 12px; font-size: 13px; color: var(--faint);
+  }
+  .examples button {
+    font: 500 12.5px/1 var(--mono);
+    background: var(--surface); color: var(--muted);
+    border: 1px solid var(--line); border-radius: 7px;
+    padding: 6px 10px; cursor: pointer; transition: .15s;
+  }
+  .examples button:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ---------- result ---------- */
+  .result { margin-top: 30px; }
+  .resulthead { display: flex; align-items: center; gap: 13px; flex-wrap: wrap; }
+  .handle {
+    font-size: clamp(36px, 7vw, 56px); font-weight: 700;
+    letter-spacing: -0.03em; line-height: 1.05; margin: 0;
+    text-wrap: balance; word-break: break-all;
+  }
+  .pill {
+    font: 600 11.5px/1 var(--sans); letter-spacing: 0.03em;
+    padding: 6px 11px; border-radius: 100px; white-space: nowrap;
+  }
+  .pill.ok      { background: var(--ok-bg);   color: var(--ok); }
+  .pill.warn    { background: var(--warn-bg); color: var(--warn); }
+  .pill.bad     { background: var(--bad-bg);  color: var(--bad); }
+  .pill.neutral { background: var(--surface-2); color: var(--muted); }
+  .pill.accent  { background: var(--accent-bg); color: var(--accent); }
+
+  .label {
+    color: var(--faint); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; margin: 22px 0 7px;
+  }
+  .addr {
+    font-family: var(--mono); font-size: 13px; line-height: 1.75;
+    word-break: break-all; background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px 16px; color: var(--accent);
+  }
+  .addr.null { color: var(--faint); }
+  .note { color: var(--muted); font-size: 13.5px; margin: 10px 0 0; max-width: 66ch; }
+
+  .facts {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px; margin-top: 20px;
+  }
+  .fact {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 13px 15px;
+  }
+  .fact dt {
+    font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--faint); font-weight: 600; margin: 0 0 4px;
+  }
+  .fact dd {
+    margin: 0; font-family: var(--mono); font-size: 14px;
+    font-variant-numeric: tabular-nums; color: var(--ink);
+  }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 48px; }
+  h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 5px; }
+  .sub { color: var(--muted); font-size: 13.5px; margin: 0 0 16px; max-width: 68ch; }
+
+  /* ---------- wire panel ---------- */
+  .panel {
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--surface); overflow: hidden;
+  }
+  .panel + .panel { margin-top: 12px; }
+  .panel-h {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 11px 16px; background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+    font: 600 11.5px/1 var(--sans); letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .panel-b { padding: 15px 16px; font-family: var(--mono); font-size: 12.5px; overflow-x: auto; }
+  .kv { display: flex; gap: 10px; white-space: nowrap; line-height: 1.9; }
+  .kv .k { color: var(--faint); min-width: 114px; }
+  .kv .v { color: var(--ink); }
+  .b64 { word-break: break-all; white-space: normal; color: var(--accent); margin-top: 10px; line-height: 1.7; }
+
+  table.bytes { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  table.bytes th {
+    text-align: left; font: 600 11px/1 var(--sans); letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--faint);
+    padding: 0 14px 9px 0; white-space: nowrap;
+  }
+  table.bytes td {
+    font-family: var(--mono); padding: 5px 14px 5px 0; vertical-align: top;
+    color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+  table.bytes td.off { color: var(--faint); white-space: nowrap; }
+  table.bytes td.val { word-break: break-all; color: var(--accent); }
+
+  /* ---------- stats ---------- */
+  .bar {
+    height: 7px; background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 100px; overflow: hidden; margin-top: 14px;
+  }
+  .bar i { display: block; height: 100%; background: var(--accent); }
+
+  /* ---------- fees ---------- */
+  table.fees { border-collapse: collapse; width: 100%; font-size: 14px; }
+  table.fees th {
+    text-align: left; font: 600 11px/1 var(--sans); letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--faint);
+    padding: 0 0 10px; border-bottom: 1px solid var(--line);
+  }
+  table.fees th.num, table.fees td.num { text-align: right; }
+  table.fees td { padding: 11px 0; border-bottom: 1px solid var(--line); }
+  table.fees td.num {
+    font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums;
+  }
+  table.fees tr:last-child td { border-bottom: 0; }
+  .caution {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--warn-bg); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 12px 15px;
+    color: var(--warn); font-size: 12.5px; margin-top: 14px;
+  }
+
+  footer {
+    margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line);
+    color: var(--faint); font-size: 13px; line-height: 1.7;
+  }
+  code.inline {
+    font-family: var(--mono); font-size: 0.88em;
+    background: var(--surface-2); color: var(--accent);
+    padding: 2px 6px; border-radius: 5px;
+  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>QHandle</h1>
+      <p class="tagline">Resolve a human-readable handle to a Qubic address</p>
+    </div>
+    <button class="themetoggle" id="tt" type="button">Theme</button>
+  </header>
+
+  <div class="mode" id="modebanner">
+    <span class="dot"></span>
+    <div id="modetext">Checking connection&hellip;</div>
+  </div>
+
+  <div class="searchrow">
+    <label class="field">
+      <input id="q" value="alice" spellcheck="false" autocomplete="off" aria-label="Handle to resolve">
+    </label>
+    <button class="go" id="goBtn" type="button">Resolve</button>
+  </div>
+  <div class="examples">
+    <span>Try</span>
+    <button type="button" data-h="alice">alice</button>
+    <button type="button" data-h="qubicshop">qubicshop</button>
+    <button type="button" data-h="oldname">oldname</button>
+    <button type="button" data-h="free">free</button>
+    <button type="button" data-h="ab">ab</button>
+    <button type="button" data-h="-bad-">-bad-</button>
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <section>
+    <h2>What went over the wire</h2>
+    <p class="sub">
+      <code class="inline">ResolveHandle</code> is a <code class="inline">PUBLIC_FUNCTION</code>, so it is a
+      plain HTTP POST &mdash; no wallet, no signature, no fee, and it keeps answering even when the
+      contract's execution fee reserve is empty. The offsets below are the real ones from
+      <code class="inline">tests/measure_sizes.cpp</code>: if they ever stop matching, the decoder and
+      the contract have drifted apart.
+    </p>
+    <div class="panel">
+      <div class="panel-h"><span>Request &middot; POST /v1/querySmartContract</span><span id="reqsize"></span></div>
+      <div class="panel-b" id="req"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><span>Response &middot; ResolveHandle_output</span><span>80 bytes</span></div>
+      <div class="panel-b" id="res"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Reverse resolution</h2>
+    <p class="sub">
+      Address &rarr; handle. Opt-in: an owner sets it with <code class="inline">SetPrimary</code>, and the
+      contract re-checks the forward record on every read &mdash; so a stale entry is inert rather than
+      misleading.
+    </p>
+    <div class="searchrow">
+      <label class="field">
+        <input id="raddr" spellcheck="false" autocomplete="off" aria-label="Address to reverse-resolve"
+               style="font-family:var(--mono);font-size:13px;font-weight:400">
+      </label>
+      <button class="go" id="rgoBtn" type="button">Look up</button>
+    </div>
+    <div id="rresult" style="margin-top:16px"></div>
+  </section>
+
+  <section>
+    <h2>Registry</h2>
+    <p class="sub">From <code class="inline">Stats</code>. Capacity is the 80&#37; soft cap rather than the
+      raw 2<sup>17</sup> slots &mdash; past that, <code class="inline">HashMap</code> lookups degrade from
+      constant time toward linear.</p>
+    <dl class="facts" id="stats"></dl>
+    <div class="bar"><i id="fill" style="width:0%"></i></div>
+  </section>
+
+  <section>
+    <h2>Fees</h2>
+    <p class="sub">From <code class="inline">Fees</code>. Short handles cost more because they are the
+      scarce, squattable ones. Renewal is what returns lapsed names to supply.</p>
+    <table class="fees">
+      <thead><tr><th>Action</th><th class="num">QU</th><th class="num">Per</th></tr></thead>
+      <tbody id="feerows"></tbody>
+    </table>
+    <div class="caution">
+      <span>&#9888;</span>
+      <span>Placeholder constants. The execution fee multiplier is set by computor quorum at runtime and
+      is not published, so real pricing can only be measured against a deployed contract of this exact
+      state size &mdash; a milestone&nbsp;2 deliverable.</span>
+    </div>
+  </section>
+
+  <footer>
+    Prototype for <b style="color:var(--muted)">QHandle</b>, a human-readable naming service for Qubic.
+    Read-only: this page never signs or broadcasts anything. Registration uses commit&ndash;reveal &mdash;
+    two transactions at least five ticks apart &mdash; which needs key handling and is deliberately out of
+    scope here. Addresses appear as hex; rendering them as 60-character Qubic identities needs a K12
+    checksum, available from <code class="inline">@qubic-lib/qubic-ts-library</code> in a real build.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CONTRACT_INDEX = 99;              // placeholder until QHandle has a real index
+  var RPC = "https://rpc.qubic.org/";
+  var FN_RESOLVE = 2;
+  var NAME_LEN = 32;
+
+  var STATUS = {
+    0: ["ok", "Registered"], 1: ["bad", "Invalid name"], 2: ["bad", "Taken"],
+    3: ["neutral", "Available"], 4: ["warn", "Expired"], 5: ["bad", "Not owner"],
+    12: ["warn", "Locked"]
+  };
+
+  var EPOCH_NOW = 168, GRACE = 13;
+  var SIM = {
+    alice:     { target: "1f590d03e613bdded38b4c0820ac44615f91af12435980b3ede3c08c315a2544",
+                 owner:  "1f590d03e613bdded38b4c0820ac44615f91af12435980b3ede3c08c315a2544",
+                 expiry: 220, registered: 168, flags: 0 },
+    qubicshop: { target: "91f6cf904f7cdfa15911812e8d1f6d4cc55019873ef321fe814ceb89c4dfb78e",
+                 owner:  "91f6cf904f7cdfa15911812e8d1f6d4cc55019873ef321fe814ceb89c4dfb78e",
+                 expiry: 174, registered: 122, flags: 1 },
+    oldname:   { target: "d7e3604a356bcf23d7e3604a356bcf23d7e3604a356bcf23d7e3604a356bcf23",
+                 owner:  "d7e3604a356bcf23d7e3604a356bcf23d7e3604a356bcf23d7e3604a356bcf23",
+                 expiry: 160, registered: 108, flags: 0 }
+  };
+  var SIM_PRIMARY = { "1f590d03e613bdded38b4c0820ac44615f91af12435980b3ede3c08c315a2544": "alice" };
+  var SIM_STATS = { pop: 12483, cap: 104857, cpop: 37, ccap: 3276,
+                    earned: 249660000000, distributed: 172000000000,
+                    burned: 74898000000, reserve: 4120000000000 };
+  var FEES = { l3: 1000000000, l4: 200000000, l5: 20000000,
+               renew: 20000000, transfer: 1000000 };
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function bytesToHex(b) {
+    var s = "", i;
+    for (i = 0; i < b.length; i++) s += ("0" + b[i].toString(16)).slice(-2);
+    return s;
+  }
+  function bytesToB64(b) {
+    var s = "", i;
+    for (i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s);
+  }
+  function hexToBytes(h) {
+    var out = new Uint8Array(h.length / 2), i;
+    for (i = 0; i < out.length; i++) out[i] = parseInt(h.substr(i * 2, 2), 16);
+    return out;
+  }
+  function fmt(n) { return Number(n).toLocaleString("en-US"); }
+  function short(hex) { return hex.slice(0, 10) + "…" + hex.slice(-8); }
+
+  // Mirrors QHANDLE::_Canonicalize exactly: lowercase, 3-32 chars, [a-z0-9-],
+  // no leading, trailing or doubled hyphen. Keeps the UI from spending a
+  // transaction on a name the contract will reject.
+  function canonicalize(raw) {
+    var s = String(raw).trim().toLowerCase();
+    if (s.length < 3) return { ok: false, why: "Too short — the minimum is 3 characters." };
+    if (s.length > 32) return { ok: false, why: "Too long — the maximum is 32 characters." };
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      var isAZ = c >= 97 && c <= 122, is09 = c >= 48 && c <= 57, isHy = c === 45;
+      if (!isAZ && !is09 && !isHy) {
+        return { ok: false, why: "Only a–z, 0–9 and hyphen are allowed. Non-ASCII is rejected so two names cannot look identical and resolve differently." };
+      }
+      if (isHy) {
+        if (i === 0 || i === s.length - 1) return { ok: false, why: "A hyphen cannot lead or trail." };
+        if (s.charCodeAt(i - 1) === 45) return { ok: false, why: "Two hyphens cannot sit together." };
+      }
+    }
+    return { ok: true, name: s };
+  }
+
+  function nameToBytes(name) {
+    var b = new Uint8Array(NAME_LEN);
+    for (var i = 0; i < name.length; i++) b[i] = name.charCodeAt(i);
+    return b;
+  }
+
+  // 60-char base-26 identity -> 32 bytes. Mirrors qubic-cli's decoder, which
+  // also ignores the 4 trailing checksum characters.
+  function identityToBytes(id) {
+    var t = String(id).trim();
+    if (/^[0-9a-fA-F]{64}$/.test(t)) return hexToBytes(t);
+    var s = t.toUpperCase();
+    if (s.length !== 60 || !/^[A-Z]{60}$/.test(s)) return null;
+    var out = new Uint8Array(32), i, j;
+    for (i = 0; i < 4; i++) {
+      var frag = 0n;
+      for (j = 13; j >= 0; j--) frag = frag * 26n + BigInt(s.charCodeAt(i * 14 + j) - 65);
+      for (j = 0; j < 8; j++) out[i * 8 + j] = Number((frag >> BigInt(8 * j)) & 255n);
+    }
+    return out;
+  }
+
+  function pill(kind, label) { return '<span class="pill ' + kind + '">' + esc(label) + "</span>"; }
+  function fact(k, v) { return "<div class='fact'><dt>" + esc(k) + "</dt><dd>" + esc(v) + "</dd></div>"; }
+
+  function renderInvalid(raw, why) {
+    $("result").innerHTML =
+      '<div class="resulthead"><h2 class="handle">' + esc(raw || "—") + "</h2>" +
+      pill("bad", "Invalid") + "</div>" +
+      '<p class="note">' + esc(why) + "</p>";
+    $("reqsize").textContent = "";
+    $("req").innerHTML = '<div class="kv"><span class="k">not sent</span>' +
+      '<span class="v">the name fails validation before a request is built</span></div>';
+    $("res").innerHTML = '<div class="kv"><span class="k">—</span></div>';
+  }
+
+  function renderResult(name, rec) {
+    var statusCode = !rec ? 3 : (EPOCH_NOW >= rec.expiry ? 4 : 0);
+    var remaining = statusCode === 0 ? rec.expiry - EPOCH_NOW : 0;
+    var st = STATUS[statusCode], kind = st[0], label = st[1];
+    if (statusCode === 0 && remaining <= 8) { kind = "warn"; label = "Expiring soon"; }
+
+    var html = '<div class="resulthead"><h2 class="handle">' + esc(name) + "</h2>" + pill(kind, label);
+    if (rec && (rec.flags & 1)) html += pill("neutral", "Transfer locked");
+    html += "</div>";
+
+    if (!rec) {
+      html += '<p class="note">Not in the registry. It could be claimed with a commit–reveal pair: ' +
+              "two transactions, at least five ticks apart, so the name is never visible in the " +
+              "transaction pool before the claim is recorded.</p>";
+    } else {
+      var expired = statusCode === 4;
+      html += '<div class="label">Resolves to</div>' +
+        '<div class="addr' + (expired ? " null" : "") + '">' +
+        (expired ? "0000000000000000000000000000000000000000000000000000000000000000" : esc(rec.target)) +
+        "</div>";
+      if (expired) {
+        html += '<p class="note">Expired handles resolve to the null address, never to the previous ' +
+          "holder's — a wallet must not be able to pay a lapsed name. Reclaimable by anyone " +
+          (EPOCH_NOW >= rec.expiry + GRACE ? "now." : "from epoch " + (rec.expiry + GRACE) + ".") + "</p>";
+      }
+      html += '<dl class="facts">' +
+        fact("Owner", short(rec.owner)) +
+        fact("Registered", "epoch " + rec.registered) +
+        fact("Expires", "epoch " + rec.expiry) +
+        fact(expired ? "Grace ends" : "Epochs left",
+             expired ? "epoch " + (rec.expiry + GRACE) : String(remaining)) +
+        "</dl>";
+    }
+    $("result").innerHTML = html;
+    return statusCode;
+  }
+
+  function renderWire(name, statusCode, rec) {
+    var input = nameToBytes(name);
+    $("reqsize").textContent = input.length + " bytes";
+    $("req").innerHTML =
+      '<div class="kv"><span class="k">contractIndex</span><span class="v">' + CONTRACT_INDEX + "</span></div>" +
+      '<div class="kv"><span class="k">inputType</span><span class="v">' + FN_RESOLVE + "  ResolveHandle</span></div>" +
+      '<div class="kv"><span class="k">inputSize</span><span class="v">' + input.length + "</span></div>" +
+      '<div class="kv"><span class="k">name</span><span class="v">' + bytesToHex(input).slice(0, 30) + "…</span></div>" +
+      '<div class="b64">requestData: ' + bytesToB64(input) + "</div>";
+
+    var expired = statusCode === 4;
+    var target = rec && !expired ? rec.target : "00".repeat(32);
+    var owner  = rec && !expired ? rec.owner  : "00".repeat(32);
+    var rows = [
+      ["0",  "32", "target",          "id",     short(target)],
+      ["32", "32", "owner",           "id",     short(owner)],
+      ["64", "4",  "expiryEpoch",     "uint32", rec ? String(rec.expiry) : "0"],
+      ["68", "4",  "registeredEpoch", "uint32", rec ? String(rec.registered) : "0"],
+      ["72", "1",  "length",          "uint8",  rec ? String(name.length) : "0"],
+      ["73", "1",  "flags",           "uint8",  rec ? String(rec.flags) : "0"],
+      ["74", "1",  "status",          "uint8",  statusCode + "  " + STATUS[statusCode][1]]
+    ];
+    var html = "<table class='bytes'><thead><tr><th>Off</th><th>Size</th><th>Field</th><th>Type</th><th>Value</th></tr></thead><tbody>";
+    rows.forEach(function (r) {
+      html += "<tr><td class='off'>" + r[0] + "</td><td class='off'>" + r[1] + "</td><td>" + r[2] +
+              "</td><td class='off'>" + r[3] + "</td><td class='val'>" + esc(r[4]) + "</td></tr>";
+    });
+    $("res").innerHTML = html + "</tbody></table>";
+  }
+
+  function resolve() {
+    var raw = $("q").value, c = canonicalize(raw);
+    if (!c.ok) { renderInvalid(raw, c.why); return; }
+    var rec = SIM[c.name] || null;
+    renderWire(c.name, renderResult(c.name, rec), rec);
+  }
+
+  function reverse() {
+    var bytes = identityToBytes($("raddr").value), out = $("rresult");
+    if (!bytes) {
+      out.innerHTML = '<p class="note" style="margin:0">Expected a 60-character Qubic identity or 64 hex ' +
+        "characters. Nothing was sent — the input is rejected before a request is built.</p>";
+      return;
+    }
+    var hex = bytesToHex(bytes), name = SIM_PRIMARY[hex];
+    if (!name) {
+      out.innerHTML = '<div class="resulthead">' + pill("neutral", "No primary handle") + "</div>" +
+        '<p class="note">This address has no reverse record. Owners opt in with ' +
+        "<code class='inline'>SetPrimary</code>; it is never derived automatically, or anyone could " +
+        "squat a display name on someone else's address.</p>";
+      return;
+    }
+    out.innerHTML = '<div class="resulthead"><h2 class="handle" style="font-size:36px">' + esc(name) +
+      "</h2>" + pill("accent", "Verified against forward record") + "</div>" +
+      '<dl class="facts">' + fact("Address", short(hex)) +
+      fact("Expires", "epoch " + SIM[name].expiry) + "</dl>";
+  }
+
+  function renderStats() {
+    var s = SIM_STATS, pct = (s.pop / s.cap) * 100;
+    $("stats").innerHTML =
+      fact("Handles", fmt(s.pop)) +
+      fact("Usable capacity", fmt(s.cap)) +
+      fact("Utilisation", pct.toFixed(1) + "%") +
+      fact("Pending commits", fmt(s.cpop) + " / " + fmt(s.ccap)) +
+      fact("Fees earned", fmt(s.earned) + " QU") +
+      fact("Burned to reserve", fmt(s.burned) + " QU") +
+      fact("Paid to shareholders", fmt(s.distributed) + " QU") +
+      fact("Fee reserve", fmt(s.reserve) + " QU");
+    $("fill").style.width = Math.max(pct, 0.6) + "%";
+  }
+
+  function renderFees() {
+    var rows = [
+      ["Register &mdash; 3 characters", FEES.l3, "year"],
+      ["Register &mdash; 4 characters", FEES.l4, "year"],
+      ["Register &mdash; 5+ characters", FEES.l5, "year"],
+      ["Renew (anyone may pay)", FEES.renew, "year"],
+      ["Transfer ownership", FEES.transfer, "once"],
+      ["Resolve / reverse resolve", 0, "always free"]
+    ];
+    $("feerows").innerHTML = rows.map(function (r) {
+      return "<tr><td>" + r[0] + "</td><td class='num'>" + (r[1] ? fmt(r[1]) : "—") +
+             "</td><td class='num'>" + r[2] + "</td></tr>";
+    }).join("");
+  }
+
+  function probe() {
+    var banner = $("modebanner"), text = $("modetext");
+    function simulated(reason) {
+      text.innerHTML = "<b>Simulated registry.</b> " + reason +
+        " Every byte layout, validation rule and status code on this page is the real one, taken from " +
+        "<code>src/QHandle.h</code> — only the registry contents are invented.";
+    }
+    if (!window.fetch || location.protocol === "file:") {
+      simulated("The contract is not deployed yet, so there is nothing to query.");
+      return;
+    }
+    var done = false;
+    var timer = setTimeout(function () {
+      if (!done) { done = true; simulated("The contract is not deployed yet, so there is nothing to query."); }
+    }, 2500);
+    fetch(RPC + "v1/tick-info")
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(0); })
+      .then(function (j) {
+        if (done) return; done = true; clearTimeout(timer);
+        var tick = j && j.tickInfo ? j.tickInfo.tick : null;
+        banner.className = "mode connected";
+        text.innerHTML = "<b>RPC reachable" + (tick ? " at tick " + fmt(tick) : "") +
+          ", registry simulated.</b> QHandle has no contract index until it is deployed, so lookups run " +
+          "against sample data. Set <code>CONTRACT_INDEX</code> in this file once it has one.";
+      })
+      .catch(function () {
+        if (done) return; done = true; clearTimeout(timer);
+        simulated("The RPC endpoint is not reachable from this page.");
+      });
+  }
+
+  $("tt").addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme");
+    var dark = cur ? cur === "dark" : !window.matchMedia("(prefers-color-scheme: light)").matches;
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  });
+
+  $("goBtn").addEventListener("click", resolve);
+  $("q").addEventListener("keydown", function (e) { if (e.key === "Enter") resolve(); });
+  $("rgoBtn").addEventListener("click", reverse);
+  $("raddr").addEventListener("keydown", function (e) { if (e.key === "Enter") reverse(); });
+  Array.prototype.forEach.call(document.querySelectorAll(".examples button"), function (b) {
+    b.addEventListener("click", function () { $("q").value = b.dataset.h; resolve(); });
+  });
+
+  $("raddr").value = "1f590d03e613bdded38b4c0820ac44615f91af12435980b3ede3c08c315a2544";
+  resolve();
+  reverse();
+  renderStats();
+  renderFees();
+  probe();
+})();
+</script>
